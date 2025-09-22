@@ -38,7 +38,6 @@
             position: absolute;
             z-index: 2;
             top: 0;
-            left: -20px;
         }
         .key-label {
             position: absolute;
@@ -82,17 +81,17 @@
         const piano = document.getElementById('piano');
         const messageBox = document.getElementById('message-box');
         
-        // Mapeamento de notas para frequências (aproximadas para demonstração)
+        // Mapeamento de notas para frequências
         const notes = {
-            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
-            'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77,
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.31, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'B5': 987.77,
         };
 
         const keyMap = {
             'z': 'C4', 's': 'C#4', 'x': 'D4', 'd': 'D#4', 'c': 'E4', 'v': 'F4', 'g': 'F#4',
-            'b': 'G4', 'h': 'G#4', 'n': 'A4', 'j': 'A#4', 'm': 'B4', ',': 'C5', 'l': 'C#5',
-            '.': 'D5', ';': 'D#5', '/': 'E5', 'q': 'F5', '2': 'F#5', 'w': 'G5', '3': 'G#5',
-            'e': 'A5', '4': 'A#5', 'r': 'B5',
+            'b': 'G4', 'h': 'G#4', 'n': 'A4', 'j': 'A#4', 'm': 'B4',
+            'q': 'C5', '2': 'C#5', 'w': 'D5', '3': 'D#5', 'e': 'E5', 'r': 'F5', '5': 'F#5',
+            't': 'G5', '6': 'G#5', 'y': 'A5', '7': 'A#5', 'u': 'B5'
         };
 
         const keyElements = {};
@@ -115,39 +114,52 @@
             whiteKeyContainer.className = 'flex';
             piano.appendChild(whiteKeyContainer);
 
-            let blackKeyIndex = 0;
-            whiteKeys.forEach((note, index) => {
+            let whiteKeyIndex = 0;
+            const allNotes = Object.keys(keyMap).map(key => keyMap[key]);
+
+            const pianoKeys = document.createDocumentFragment();
+
+            whiteKeys.forEach(note => {
                 const key = document.createElement('div');
                 key.className = 'piano-key white-key flex items-end justify-center rounded-b-lg shadow-md hover:bg-gray-300 active:bg-gray-400';
                 key.dataset.note = note;
-                key.innerHTML = `<span class="note-name text-gray-800">${note}</span><span class="key-label text-gray-500">${Object.keys(keyMap).find(k => keyMap[k] === note) || ''}</span>`;
+                const keyLabel = Object.keys(keyMap).find(k => keyMap[k] === note) || '';
+                key.innerHTML = `<span class="note-name text-gray-800">${note}</span><span class="key-label text-gray-500">${keyLabel.toUpperCase()}</span>`;
                 whiteKeyContainer.appendChild(key);
                 keyElements[note] = key;
-                
-                if (index < whiteKeys.length - 1 && blackKeys.includes(note + '#')) {
+
+                // Adiciona a tecla preta correspondente
+                const sharpNote = note.charAt(0) + '#' + note.charAt(1);
+                if (blackKeys.includes(sharpNote)) {
                     const blackKey = document.createElement('div');
                     blackKey.className = 'piano-key black-key flex items-end justify-center rounded-b-lg shadow-md hover:bg-gray-800 active:bg-black';
-                    blackKey.dataset.note = note + '#';
-                    blackKey.innerHTML = `<span class="note-name text-white">${note}#</span><span class="key-label text-gray-400">${Object.keys(keyMap).find(k => keyMap[k] === note + '#') || ''}</span>`;
-                    blackKey.style.marginLeft = `${-40 + (index * 60) + 30 - 20}px`; // Ajuste de posição
+                    blackKey.dataset.note = sharpNote;
+                    const blackKeyLabel = Object.keys(keyMap).find(k => keyMap[k] === sharpNote) || '';
+                    blackKey.innerHTML = `<span class="note-name text-white">${sharpNote}</span><span class="key-label text-gray-400">${blackKeyLabel.toUpperCase()}</span>`;
+                    blackKey.style.left = `${(whiteKeyIndex * 60) + 40}px`;
                     piano.appendChild(blackKey);
-                    keyElements[note + '#'] = blackKey;
+                    keyElements[sharpNote] = blackKey;
                 }
+                whiteKeyIndex++;
             });
         }
 
         function playNote(note) {
             if (!audioContext || !notes[note]) return;
+
+            // Resume o contexto de áudio se estiver suspenso
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             
             const frequency = notes[note];
             
-            oscillator = audioContext.createOscillator();
-            gainNode = audioContext.createGain();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
 
             oscillator.type = 'sine';
             oscillator.frequency.value = frequency;
 
-            // Envelopa o som para evitar clique
             gainNode.gain.setValueAtTime(0, audioContext.currentTime);
             gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.01);
             
@@ -156,8 +168,7 @@
             
             oscillator.start();
             
-            // Para de tocar a nota após um curto período
-            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
             oscillator.stop(audioContext.currentTime + 0.5);
         }
 
@@ -168,6 +179,9 @@
 
         // Event listeners para clique do mouse
         piano.addEventListener('mousedown', (e) => {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             const key = e.target.closest('.piano-key');
             if (key) {
                 const note = key.dataset.note;
@@ -185,6 +199,9 @@
 
         // Event listeners para teclas do teclado
         window.addEventListener('keydown', (e) => {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             const key = e.key.toLowerCase();
             const note = keyMap[key];
             if (note && !e.repeat) {
