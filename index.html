@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piano Virtual</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .piano-key {
+            transition: transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .piano-key:active {
+            transform: scale(0.98);
+        }
+        .white-key {
+            width: 60px;
+            height: 200px;
+            background-color: #f0f0f0;
+            border: 1px solid #c0c0c0;
+            border-radius: 0 0 8px 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .black-key {
+            width: 40px;
+            height: 120px;
+            background-color: #333;
+            border: 1px solid #1a1a1a;
+            border-radius: 0 0 6px 6px;
+            position: absolute;
+            z-index: 2;
+            top: 0;
+            left: -20px;
+        }
+        .key-label {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #555;
+            font-weight: bold;
+        }
+        .black-key .key-label {
+            color: #f0f0f0;
+            bottom: 5px;
+        }
+        .note-name {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="flex flex-col items-center p-4 md:p-8 bg-gray-800 rounded-2xl shadow-lg border border-gray-700">
+        <h1 class="text-3xl md:text-4xl font-bold mb-4">Piano Virtual</h1>
+        <p class="text-gray-400 mb-8 text-center max-w-lg">
+            Toque nas teclas com o mouse ou use o teclado para tocar o piano! As notas e as teclas correspondentes são exibidas nas teclas.
+        </p>
+
+        <div id="piano" class="flex justify-center relative rounded-xl overflow-hidden shadow-2xl">
+            <!-- As teclas do piano serão geradas aqui com JavaScript -->
+        </div>
+
+        <div id="message-box" class="mt-8 p-4 bg-gray-700 text-gray-200 rounded-lg hidden"></div>
+    </div>
+
+    <script>
+        const piano = document.getElementById('piano');
+        const messageBox = document.getElementById('message-box');
+        
+        // Mapeamento de notas para frequências (aproximadas para demonstração)
+        const notes = {
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+            'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77,
+        };
+
+        const keyMap = {
+            'z': 'C4', 's': 'C#4', 'x': 'D4', 'd': 'D#4', 'c': 'E4', 'v': 'F4', 'g': 'F#4',
+            'b': 'G4', 'h': 'G#4', 'n': 'A4', 'j': 'A#4', 'm': 'B4', ',': 'C5', 'l': 'C#5',
+            '.': 'D5', ';': 'D#5', '/': 'E5', 'q': 'F5', '2': 'F#5', 'w': 'G5', '3': 'G#5',
+            'e': 'A5', '4': 'A#5', 'r': 'B5',
+        };
+
+        const keyElements = {};
+        let audioContext;
+        let oscillator;
+        let gainNode;
+        
+        // Verifica se a API de áudio é suportada
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            showMessage('Desculpe, a API de áudio do seu navegador não é suportada. O som não funcionará.');
+        }
+
+        function createPiano() {
+            const whiteKeys = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5'];
+            const blackKeys = ['C#4', 'D#4', 'F#4', 'G#4', 'A#4', 'C#5', 'D#5', 'F#5', 'G#5', 'A#5'];
+
+            const whiteKeyContainer = document.createElement('div');
+            whiteKeyContainer.className = 'flex';
+            piano.appendChild(whiteKeyContainer);
+
+            let blackKeyIndex = 0;
+            whiteKeys.forEach((note, index) => {
+                const key = document.createElement('div');
+                key.className = 'piano-key white-key flex items-end justify-center rounded-b-lg shadow-md hover:bg-gray-300 active:bg-gray-400';
+                key.dataset.note = note;
+                key.innerHTML = `<span class="note-name text-gray-800">${note}</span><span class="key-label text-gray-500">${Object.keys(keyMap).find(k => keyMap[k] === note) || ''}</span>`;
+                whiteKeyContainer.appendChild(key);
+                keyElements[note] = key;
+                
+                if (index < whiteKeys.length - 1 && blackKeys.includes(note + '#')) {
+                    const blackKey = document.createElement('div');
+                    blackKey.className = 'piano-key black-key flex items-end justify-center rounded-b-lg shadow-md hover:bg-gray-800 active:bg-black';
+                    blackKey.dataset.note = note + '#';
+                    blackKey.innerHTML = `<span class="note-name text-white">${note}#</span><span class="key-label text-gray-400">${Object.keys(keyMap).find(k => keyMap[k] === note + '#') || ''}</span>`;
+                    blackKey.style.marginLeft = `${-40 + (index * 60) + 30 - 20}px`; // Ajuste de posição
+                    piano.appendChild(blackKey);
+                    keyElements[note + '#'] = blackKey;
+                }
+            });
+        }
+
+        function playNote(note) {
+            if (!audioContext || !notes[note]) return;
+            
+            const frequency = notes[note];
+            
+            oscillator = audioContext.createOscillator();
+            gainNode = audioContext.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+
+            // Envelopa o som para evitar clique
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.01);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            
+            // Para de tocar a nota após um curto período
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        function showMessage(msg) {
+            messageBox.textContent = msg;
+            messageBox.classList.remove('hidden');
+        }
+
+        // Event listeners para clique do mouse
+        piano.addEventListener('mousedown', (e) => {
+            const key = e.target.closest('.piano-key');
+            if (key) {
+                const note = key.dataset.note;
+                playNote(note);
+                key.classList.add('active');
+            }
+        });
+
+        piano.addEventListener('mouseup', (e) => {
+            const key = e.target.closest('.piano-key');
+            if (key) {
+                key.classList.remove('active');
+            }
+        });
+
+        // Event listeners para teclas do teclado
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            const note = keyMap[key];
+            if (note && !e.repeat) {
+                playNote(note);
+                if (keyElements[note]) {
+                    keyElements[note].classList.add('active');
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            const note = keyMap[key];
+            if (note && keyElements[note]) {
+                keyElements[note].classList.remove('active');
+            }
+        });
+
+        // Inicia a criação do piano quando a página carregar
+        createPiano();
+    </script>
+
+</body>
+</html>
