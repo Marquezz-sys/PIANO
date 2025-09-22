@@ -74,6 +74,12 @@
             <!-- As teclas do piano serão geradas aqui com JavaScript -->
         </div>
 
+        <div class="mt-8">
+            <button id="play-fur-elise" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-100 disabled:bg-gray-500 disabled:cursor-not-allowed">
+                Tocar "Für Elise"
+            </button>
+        </div>
+
         <div id="message-box" class="mt-8 p-4 bg-gray-700 text-gray-200 rounded-lg hidden"></div>
     </div>
 
@@ -93,6 +99,17 @@
             'q': 'C5', '2': 'C#5', 'w': 'D5', '3': 'D#5', 'e': 'E5', 'r': 'F5', '5': 'F#5',
             't': 'G5', '6': 'G#5', 'y': 'A5', '7': 'A#5', 'u': 'B5'
         };
+
+        const furEliseMelody = [
+            { note: 'E5', duration: 300 }, { note: 'D#5', duration: 300 }, { note: 'E5', duration: 300 }, { note: 'D#5', duration: 300 }, { note: 'E5', duration: 300 },
+            { note: 'B4', duration: 300 }, { note: 'D5', duration: 300 }, { note: 'C5', duration: 300 }, { note: 'A4', duration: 600 },
+            { note: 'A4', duration: 300 }, { note: 'C4', duration: 300 }, { note: 'E4', duration: 300 }, { note: 'A4', duration: 300 }, { note: 'B4', duration: 600 },
+            { note: 'G#4', duration: 300 }, { note: 'B4', duration: 300 }, { note: 'C5', duration: 600 },
+            { note: 'E5', duration: 300 }, { note: 'D#5', duration: 300 }, { note: 'E5', duration: 300 }, { note: 'D#5', duration: 300 }, { note: 'E5', duration: 300 },
+            { note: 'B4', duration: 300 }, { note: 'D5', duration: 300 }, { note: 'C5', duration: 300 }, { note: 'A4', duration: 600 },
+            { note: 'A4', duration: 300 }, { note: 'C4', duration: 300 }, { note: 'E4', duration: 300 }, { note: 'A4', duration: 300 }, { note: 'B4', duration: 600 },
+            { note: 'C5', duration: 300 }, { note: 'B4', duration: 300 }, { note: 'A4', duration: 600 },
+        ];
 
         const keyElements = {};
         let audioContext;
@@ -172,6 +189,17 @@
             oscillator.stop(audioContext.currentTime + 0.5);
         }
 
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function playMelody(melody) {
+            for (const note of melody) {
+                playNote(note.note);
+                await delay(note.duration);
+            }
+        }
+
         function showMessage(msg) {
             messageBox.textContent = msg;
             messageBox.classList.remove('hidden');
@@ -222,6 +250,15 @@
 
         // Inicia a criação do piano quando a página carregar
         createPiano();
+
+        const playButton = document.getElementById('play-fur-elise');
+        playButton.addEventListener('click', async () => {
+            playButton.disabled = true;
+            playButton.textContent = 'Tocando...';
+            await playMelody(furEliseMelody);
+            playButton.disabled = false;
+            playButton.textContent = 'Tocar "Für Elise"';
+        });
     </script>
 
 </body>
