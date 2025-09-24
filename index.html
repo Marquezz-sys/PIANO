@@ -74,9 +74,12 @@
             <!-- As teclas do piano serão geradas aqui com JavaScript -->
         </div>
 
-        <div class="mt-8">
+        <div class="mt-8 flex space-x-4">
             <button id="play-fur-elise" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-100 disabled:bg-gray-500 disabled:cursor-not-allowed">
                 Tocar "Für Elise"
+            </button>
+            <button id="play-megalovania" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 active:scale-100 disabled:bg-gray-500 disabled:cursor-not-allowed border-4 border-yellow-400">
+                Tocar "MEGALOVANIA"
             </button>
         </div>
 
@@ -89,6 +92,7 @@
         
         // Mapeamento de notas para frequências
         const notes = {
+            'A#3': 233.08, 'B3': 246.94,
             'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.31, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
             'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'B5': 987.77,
         };
@@ -109,6 +113,13 @@
             { note: 'B4', duration: 300 }, { note: 'D5', duration: 300 }, { note: 'C5', duration: 300 }, { note: 'A4', duration: 600 },
             { note: 'A4', duration: 300 }, { note: 'C4', duration: 300 }, { note: 'E4', duration: 300 }, { note: 'A4', duration: 300 }, { note: 'B4', duration: 600 },
             { note: 'C5', duration: 300 }, { note: 'B4', duration: 300 }, { note: 'A4', duration: 600 },
+        ];
+
+        const megalovaniaMelody = [
+            { note: 'D4', duration: 150 }, { note: 'D4', duration: 150 }, { note: 'D5', duration: 150 }, { note: 'A4', duration: 150 }, { note: 'G#4', duration: 150 }, { note: 'G4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'D4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'G4', duration: 150 },
+            { note: 'C4', duration: 150 }, { note: 'C4', duration: 150 }, { note: 'D5', duration: 150 }, { note: 'A4', duration: 150 }, { note: 'G#4', duration: 150 }, { note: 'G4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'D4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'G4', duration: 150 },
+            { note: 'B3', duration: 150 }, { note: 'B3', duration: 150 }, { note: 'D5', duration: 150 }, { note: 'A4', duration: 150 }, { note: 'G#4', duration: 150 }, { note: 'G4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'D4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'G4', duration: 150 },
+            { note: 'A#3', duration: 150 }, { note: 'A#3', duration: 150 }, { note: 'D5', duration: 150 }, { note: 'A4', duration: 150 }, { note: 'G#4', duration: 150 }, { note: 'G4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'D4', duration: 150 }, { note: 'F4', duration: 150 }, { note: 'G4', duration: 150 },
         ];
 
         const keyElements = {};
@@ -251,13 +262,26 @@
         // Inicia a criação do piano quando a página carregar
         createPiano();
 
-        const playButton = document.getElementById('play-fur-elise');
-        playButton.addEventListener('click', async () => {
-            playButton.disabled = true;
-            playButton.textContent = 'Tocando...';
+        const playFurEliseButton = document.getElementById('play-fur-elise');
+        playFurEliseButton.addEventListener('click', async () => {
+            playFurEliseButton.disabled = true;
+            playMegalovaniaButton.disabled = true;
+            playFurEliseButton.textContent = 'Tocando...';
             await playMelody(furEliseMelody);
-            playButton.disabled = false;
-            playButton.textContent = 'Tocar "Für Elise"';
+            playFurEliseButton.disabled = false;
+            playMegalovaniaButton.disabled = false;
+            playFurEliseButton.textContent = 'Tocar "Für Elise"';
+        });
+
+        const playMegalovaniaButton = document.getElementById('play-megalovania');
+        playMegalovaniaButton.addEventListener('click', async () => {
+            playMegalovaniaButton.disabled = true;
+            playFurEliseButton.disabled = true;
+            playMegalovaniaButton.textContent = 'Tocando...';
+            await playMelody(megalovaniaMelody);
+            playMegalovaniaButton.disabled = false;
+            playFurEliseButton.disabled = false;
+            playMegalovaniaButton.textContent = 'Tocar "MEGALOVANIA"';
         });
     </script>
 
